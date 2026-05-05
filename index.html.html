@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чиний хувьд...</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400;1,700&family=Dancing+Script:wght@600;700&family=Cormorant+Garamond:ital,wght@1,300;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --rose: #ff6b9d;
+  --rose-light: #ffb3cc;
+  --rose-deep: #c44569;
+  --cream: #fff0f5;
+  --night: #0d0a1a;
+  --night-mid: #16101f;
+  --gold: #ffd6e0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--night);
+  font-family: 'Playfair Display', serif;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── LOGIN OVERLAY ── */
+#loginOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--night);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+}
+
+.login-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.login-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,180,200,0.25);
+  border-radius: 32px;
+  padding: 48px 44px 44px;
+  width: 340px;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 80px rgba(255,100,150,.15),
+    0 0 200px rgba(180,60,120,.07),
+    inset 0 0 50px rgba(255,150,180,.04);
+  text-align: center;
+  animation: cardIn 1s cubic-bezier(.23,1,.32,1) both;
+}
+
+@keyframes cardIn {
+  from { opacity:0; transform: translateY(50px) scale(.92); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+
+.login-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+  animation: heartbeat 1.5s ease-in-out infinite;
+  display: block;
+}
+
+@keyframes heartbeat {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+.login-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 26px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: rgba(255,180,200,.55);
+  margin-bottom: 32px;
+  font-style: italic;
+}
+
+.pin-container {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.pin-dot {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(255,150,180,.07);
+  border: 1.5px solid rgba(255,150,180,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #ff9db8;
+  transition: all .2s;
+}
+
+.pin-dot.filled {
+  background: rgba(255,107,157,.15);
+  border-color: rgba(255,107,157,.5);
+  box-shadow: 0 0 16px rgba(255,107,157,.2);
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.num-btn {
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255,150,180,.07);
+  border: 1px solid rgba(255,150,180,.15);
+  color: rgba(255,230,238,.9);
+  font-size: 20px;
+  font-family: 'Playfair Display', serif;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.num-btn:hover {
+  background: rgba(255,107,157,.15);
+  border-color: rgba(255,107,157,.4);
+  transform: scale(1.05);
+}
+
+.num-btn:active { transform: scale(.96); }
+
+.num-btn.del {
+  font-size: 16px;
+  color: rgba(255,150,180,.7);
+}
+
+.num-btn.empty {
+  pointer-events: none;
+  background: transparent;
+  border: none;
+}
+
+.login-error {
+  font-family: 'Dancing Script', cursive;
+  font-size: 15px;
+  color: #ff6b9d;
+  min-height: 22px;
+  transition: opacity .3s;
+}
+
+.shake { animation: shake .4s ease both; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+
+/* ── QR MODAL ── */
+#qrModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 8888;
+  background: rgba(13,10,26,.85);
+  backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+}
+
+#qrModal.show { display: flex; }
+
+.qr-box {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,180,200,.25);
+  border-radius: 28px;
+  padding: 36px 40px;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(255,100,150,.18);
+  animation: cardIn .6s cubic-bezier(.23,1,.32,1) both;
+}
+
+.qr-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  color: #ff9db8;
+  margin-bottom: 6px;
+}
+
+.qr-sub {
+  font-size: 12px;
+  color: rgba(255,180,200,.5);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+#qrcode {
+  display: inline-block;
+  background: white;
+  padding: 12px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+#qrcode canvas, #qrcode img { display: block !important; }
+
+.qr-pass {
+  font-family: 'Dancing Script', cursive;
+  font-size: 18px;
+  color: rgba(255,180,200,.6);
+  margin-bottom: 20px;
+}
+
+.qr-close {
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  border: none;
+  border-radius: 50px;
+  padding: 11px 32px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255,100,150,.35);
+  transition: transform .2s;
+}
+
+.qr-close:hover { transform: scale(1.05); }
+
+/* ── Starfield ── */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--d) ease-in-out infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: .1; transform: scale(.8); }
+  to   { opacity: .9; transform: scale(1.2); }
+}
+
+/* ── Aurora glow ── */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.aurora-band {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .12;
+  animation: drift var(--dr) ease-in-out infinite alternate;
+}
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(var(--tx), var(--ty)) scale(1.15); }
+}
+
+/* ── Floating hearts ── */
+.heart-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+.heart-float {
+  position: absolute;
+  bottom: -50px;
+  font-size: var(--fs);
+  animation: floatUp var(--dur) linear infinite;
+  animation-delay: var(--delay);
+  opacity: 0;
+}
+@keyframes floatUp {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+  10%  { opacity: .6; }
+  90%  { opacity: .4; }
+  100% { opacity: 0; transform: translateY(-110vh) rotate(360deg); }
+}
+
+/* ── Page layout ── */
+.container {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 60px;
+  gap: 0;
+}
+
+/* ── Petal header ── */
+.petals-top {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 18px;
+  pointer-events: none;
+}
+.petal {
+  font-size: 24px;
+  animation: sway 3s ease-in-out infinite alternate;
+  animation-delay: var(--d);
+}
+@keyframes sway {
+  from { transform: rotate(-10deg); }
+  to   { transform: rotate(10deg); }
+}
+
+/* ── Main card ── */
+.card {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,180,200,0.2);
+  border-radius: 36px;
+  padding: 50px 44px 44px;
+  max-width: 520px;
+  width: 100%;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 80px rgba(255,100,150,.12),
+    0 0 200px rgba(180,60,120,.06),
+    inset 0 0 50px rgba(255,150,180,.04);
+  text-align: center;
+  animation: cardIn 1.2s cubic-bezier(.23,1,.32,1) both;
+}
+
+/* ── Profile image ── */
+.girl-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 28px;
+}
+.glow-ring {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255,107,157,.5),
+    rgba(255,180,200,.2),
+    rgba(196,69,105,.5),
+    rgba(255,107,157,.5)
+  );
+  animation: spinGlow 6s linear infinite;
+  filter: blur(10px);
+}
+@keyframes spinGlow { to { transform: rotate(360deg); } }
+
+.pulse-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,150,180,.4);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); opacity:.5; }
+  50%      { transform: scale(1.08); opacity:1; }
+}
+.girl-img {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 3px solid rgba(255,150,180,.6);
+  box-shadow: 0 0 40px rgba(255,100,150,.45);
+  position: relative;
+  z-index: 2;
+  display: block;
+  cursor: pointer;
+}
+
+.girl-upload-hint {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .2s;
+  z-index: 3;
+  cursor: pointer;
+  font-size: 28px;
+}
+.girl-wrap:hover .girl-upload-hint { opacity: 1; }
+.girl-wrap input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 4;
+}
+
+/* ── Photo memories section ── */
+.memories-section {
+  margin: 28px 0 0;
+  animation: fadeIn 1.5s 1.8s both;
+}
+.memories-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 18px;
+  color: var(--rose-light);
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.photo-slot {
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,150,180,.25);
+  background: rgba(255,150,180,.06);
+  position: relative;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.photo-slot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255,100,150,.3);
+}
+.photo-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-slot .add-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,150,180,.5);
+  font-size: 22px;
+  gap: 4px;
+  transition: color .2s;
+}
+.photo-slot:hover .add-icon { color: rgba(255,150,180,.9); }
+.add-icon span {
+  font-size: 10px;
+  font-family: 'Dancing Script', cursive;
+}
+.photo-slot input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Text content ── */
+.tag {
+  font-family: 'Dancing Script', cursive;
+  font-size: 15px;
+  color: #ff9db8;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  animation: fadeIn 1.5s .5s both;
+}
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(27px, 6vw, 38px);
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 24px;
+  animation: fadeIn 1.5s .7s both;
+  text-shadow: 0 0 40px rgba(255,150,180,.5);
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 24px;
+  width: 80%;
+  animation: fadeIn 1.5s .9s both;
+}
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,150,180,.5), transparent);
+}
+.divider-heart {
+  color: #ff6b9d;
+  font-size: 18px;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.message {
+  font-size: clamp(15px, 3.5vw, 17px);
+  color: rgba(255,220,230,.85);
+  line-height: 1.95;
+  margin-bottom: 30px;
+  font-style: italic;
+  animation: fadeIn 1.5s 1.1s both;
+}
+.sub-message {
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  color: #ff9db8;
+  margin-bottom: 36px;
+  animation: fadeIn 1.5s 1.3s both;
+}
+
+/* ── Music player ── */
+.music-player {
+  background: rgba(255,107,157,.08);
+  border: 1px solid rgba(255,150,180,.2);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  animation: fadeIn 1.5s 1.6s both;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.music-disc {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ff6b9d, #c44569, #ff9db8, #ff6b9d);
+  position: relative;
+  flex-shrink: 0;
+  animation: spinDisc 4s linear infinite paused;
+  box-shadow: 0 0 16px rgba(255,100,150,.4);
+  cursor: pointer;
+  transition: transform .2s;
+}
+.music-disc:hover { transform: scale(1.08); }
+.music-disc.playing { animation-play-state: running; }
+.music-disc::after {
+  content: '';
+  position: absolute;
+  inset: 35%;
+  border-radius: 50%;
+  background: var(--night-mid);
+}
+.music-info { flex: 1; text-align: left; min-width: 100px; }
+.music-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.music-artist {
+  font-size: 11px;
+  color: rgba(255,180,200,.6);
+  letter-spacing: 1px;
+}
+.music-controls { display: flex; gap: 8px; align-items: center; }
+.play-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 16px rgba(255,100,150,.4);
+}
+.play-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(255,100,150,.6); }
+
+.music-progress {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,150,180,.2);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b9d, #ffb3cc);
+  border-radius: 2px;
+  width: 0%;
+  transition: width .5s linear;
+}
+.time-label {
+  font-size: 10px;
+  color: rgba(255,180,200,.5);
+  min-width: 30px;
+}
+
+/* ── Upload music button ── */
+.music-upload-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,150,180,.1);
+}
+
+.upload-music-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,107,157,.1);
+  border: 1.5px dashed rgba(255,150,180,.35);
+  border-radius: 50px;
+  padding: 7px 18px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 14px;
+  color: #ff9db8;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.upload-music-btn:hover {
+  background: rgba(255,107,157,.2);
+  border-color: rgba(255,150,180,.6);
+  transform: scale(1.03);
+  box-shadow: 0 4px 16px rgba(255,100,150,.2);
+}
+.upload-music-btn input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.music-upload-hint {
+  font-size: 11px;
+  color: rgba(255,180,200,.4);
+  font-style: italic;
+  flex: 1;
+  text-align: right;
+}
+
+/* ── Reveal button ── */
+.reveal-btn {
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  border: none;
+  border-radius: 50px;
+  padding: 15px 44px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 21px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(255,100,150,.4);
+  transition: transform .2s, box-shadow .2s;
+  animation: fadeIn 1.5s 1.5s both;
+  position: relative;
+  overflow: hidden;
+}
+.reveal-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 60%;
+  height: 200%;
+  background: rgba(255,255,255,.2);
+  transform: skewX(-20deg);
+  animation: shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { left: -60%; }
+  100% { left: 160%; }
+}
+.reveal-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 40px rgba(255,100,150,.6); }
+.reveal-btn:active { transform: scale(.97); }
+
+/* ── QR button ── */
+.qr-btn {
+  margin-top: 20px;
+  background: rgba(255,107,157,.1);
+  border: 1px solid rgba(255,150,180,.3);
+  border-radius: 50px;
+  padding: 10px 28px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 17px;
+  color: #ff9db8;
+  cursor: pointer;
+  transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.qr-btn:hover {
+  background: rgba(255,107,157,.2);
+  transform: scale(1.04);
+  box-shadow: 0 4px 20px rgba(255,100,150,.2);
+}
+
+/* ── Secret message ── */
+.secret {
+  display: none;
+  margin-top: 30px;
+  padding: 30px;
+  background: rgba(255,100,150,.08);
+  border: 1px solid rgba(255,150,180,.3);
+  border-radius: 24px;
+  animation: secretReveal .8s cubic-bezier(.23,1,.32,1) both;
+}
+.secret.show { display: block; }
+@keyframes secretReveal {
+  from { opacity:0; transform: scale(.8) translateY(20px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.secret-text {
+  font-size: clamp(16px, 3.5vw, 19px);
+  color: #ffe4ed;
+  line-height: 2;
+  font-style: italic;
+}
+.secret-sign {
+  margin-top: 18px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 26px;
+  color: #ff9db8;
+}
+
+/* ── Heart burst ── */
+.burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  font-size: 24px;
+  animation: burst 1s ease-out forwards;
+}
+@keyframes burst {
+  0%   { opacity:1; transform: translate(0,0) scale(.5); }
+  100% { opacity:0; transform: translate(var(--tx),var(--ty)) scale(1.5); }
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,107,157,.3); border-radius: 2px; }
+
+@keyframes spinDisc { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Audio (default song, replaced by upload) -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="https://files.catbox.moe/290be.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ══════════════════════════════════
+     LOGIN OVERLAY
+══════════════════════════════════ -->
+<div id="loginOverlay">
+  <div class="login-stars" id="loginStars"></div>
+  <div class="login-card" id="loginCard">
+    <span class="login-icon">🔐</span>
+    <div class="login-title">Нэвтрэх</div>
+    <div class="login-sub">Зөвхөн чиний зориулсан... 🌸</div>
+
+    <div class="pin-container" id="pinDisplay">
+      <div class="pin-dot" id="d0">·</div>
+      <div class="pin-dot" id="d1">·</div>
+      <div class="pin-dot" id="d2">·</div>
+      <div class="pin-dot" id="d3">·</div>
+    </div>
+
+    <div class="numpad" id="numpad">
+      <button class="num-btn" onclick="enterPin('1')">1</button>
+      <button class="num-btn" onclick="enterPin('2')">2</button>
+      <button class="num-btn" onclick="enterPin('3')">3</button>
+      <button class="num-btn" onclick="enterPin('4')">4</button>
+      <button class="num-btn" onclick="enterPin('5')">5</button>
+      <button class="num-btn" onclick="enterPin('6')">6</button>
+      <button class="num-btn" onclick="enterPin('7')">7</button>
+      <button class="num-btn" onclick="enterPin('8')">8</button>
+      <button class="num-btn" onclick="enterPin('9')">9</button>
+      <button class="num-btn empty"></button>
+      <button class="num-btn" onclick="enterPin('0')">0</button>
+      <button class="num-btn del" onclick="deletePin()">⌫</button>
+    </div>
+
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     QR MODAL
+══════════════════════════════════ -->
+<div id="qrModal">
+  <div class="qr-box">
+    <div class="qr-title">📱 QR Код</div>
+    <div class="qr-sub">Утсаараа уншуулж нэвтэр</div>
+    <div id="qrcode"></div>
+    <div class="qr-pass">Нууц үг: <strong style="color:#ff9db8">0000</strong></div>
+    <button class="qr-close" onclick="document.getElementById('qrModal').classList.remove('show')">✕ Хаах</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════ -->
+<div class="stars" id="stars"></div>
+<div class="aurora" id="aurora"></div>
+<div class="heart-bg" id="heartBg"></div>
+
+<div class="container" id="mainContent" style="display:none">
+
+  <div class="petals-top">
+    <span class="petal" style="--d:0s">🌸</span>
+    <span class="petal" style="--d:.3s">🌷</span>
+    <span class="petal" style="--d:.6s">🌸</span>
+    <span class="petal" style="--d:.9s">💮</span>
+    <span class="petal" style="--d:.4s">🌸</span>
+    <span class="petal" style="--d:.8s">🌷</span>
+    <span class="petal" style="--d:.2s">🌸</span>
+  </div>
+
+  <div class="card">
+
+    <!-- Profile photo -->
+    <div class="girl-wrap">
+      <div class="glow-ring"></div>
+      <div class="pulse-ring"></div>
+      <img class="girl-img" id="mainPhoto" src="data:image/jpeg;base64,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" alt="Чи">
+      <div class="girl-upload-hint">📷</div>
+      <input type="file" accept="image/*" onchange="changeMainPhoto(this)" title="Зураг солих">
+    </div>
+
+    <div class="tag">✦ Чамд зориулсан ✦</div>
+
+    <h1 class="title">Чиний тухай<br>бодохоо болиогүй нэгэн...</h1>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-heart">♥</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <p class="message">
+      Цэцэг өгсөнд баярлалаа<br>
+      ямар ч хүлээлтгүй байхад<br>
+      үнэхээр гэнтийн байсан шүү.<br>
+      нэг тэнэг ч юм шиг гэнэтийн зүйл хэлэх гэсэн.
+    </p>
+
+    <!-- ═══════════════════════════
+         MUSIC PLAYER
+    ═══════════════════════════ -->
+    <div class="music-player" id="musicPlayer">
+      <div class="music-disc" id="disc" onclick="toggleMusic()" title="Тоглуулах/Зогсоох"></div>
+      <div style="flex:1;min-width:0">
+        <div class="music-info">
+          <div class="music-title" id="musicTitle">My Summer</div>
+          <div class="music-artist" id="musicArtist">290 • 2024</div>
+        </div>
+        <div class="music-progress">
+          <span class="time-label" id="curTime">0:00</span>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="time-label" id="durTime">-:--</span>
+        </div>
+      </div>
+      <div class="music-controls">
+        <button class="play-btn" id="playBtn" onclick="toggleMusic()">▶</button>
+      </div>
+
+      <!-- Upload music row -->
+      <div class="music-upload-row">
+        <label class="upload-music-btn">
+          🎵 Дуу солих
+          <input type="file" accept="audio/*" onchange="uploadMusic(this)">
+        </label>
+        <span class="music-upload-hint" id="uploadHint">mp3 / ogg / wav</span>
+      </div>
+    </div>
+
+    <!-- Photo memories -->
+    <div class="memories-section">
+      <div class="memories-title">🌸 Дурсамжийн зураг нэм</div>
+      <div class="photos-grid">
+        <div class="photo-slot" id="slot0">
+          <div class="add-icon">➕<span>Зураг</span></div>
+          <input type="file" accept="image/*" onchange="addPhoto(this,0)">
+        </div>
+        <div class="photo-slot" id="slot1">
+          <div class="add-icon">➕<span>Зураг</span></div>
+          <input type="file" accept="image/*" onchange="addPhoto(this,1)">
+        </div>
+        <div class="photo-slot" id="slot2">
+          <div class="add-icon">➕<span>Зураг</span></div>
+          <input type="file" accept="image/*" onchange="addPhoto(this,2)">
+        </div>
+      </div>
+    </div>
+
+    <p class="sub-message">Нэг зүйл хэлэх гэсэн юм... 💕</p>
+
+    <button class="reveal-btn" onclick="revealSecret(event)">
+      ❤️ Сэтгэлийг нээ
+    </button>
+
+    <div class="secret" id="secret">
+      <p class="secret-text">
+        Чамайг анх харснаас хойш<br>
+        цаанаасаа л бага багаар...<br><br>
+        өдөр бүрээр татагдаж байсан<br>
+        яах уу маш олон алдаа хийчээд сүүлд нь ингэж байгаа нь,<br>
+        тэнэг ч гэсэн хөөрхөн шүү.<br><br>
+        <strong style="color:#ff9db8">Би чамд дуртай.</strong> 🌸
+      </p>
+      <p class="secret-sign">— Зүрхнийхээ гүнээс ♡</p>
+    </div>
+
+    <!-- QR Button -->
+    <button class="qr-btn" onclick="showQR()">
+      📱 QR код үүсгэх
+    </button>
+
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   QR AUTO-UNLOCK — check on load
+══════════════════════════════════ */
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('open') === '1') {
+    // Hide login immediately, show main after short rose animation
+    const overlay = document.getElementById('loginOverlay');
+    // Replace login card with a rose welcome
+    const card = document.getElementById('loginCard');
+    card.innerHTML = `
+      <span style="font-size:64px;display:block;margin-bottom:12px;animation:heartbeat 1s ease-in-out infinite">🌸</span>
+      <div style="font-family:'Dancing Script',cursive;font-size:28px;color:#fff;margin-bottom:8px">Тавтай морил...</div>
+      <div style="font-size:13px;color:rgba(255,180,200,.6);font-style:italic">Чиний зориулсан зай нээгдэж байна ✨</div>
+    `;
+    setTimeout(() => {
+      overlay.style.transition = 'opacity 1s ease';
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('mainContent').style.display = 'flex';
+        initMain();
+      }, 1000);
+    }, 1400);
+  }
+})();
+
+/* ══════════════════════════════════
+   LOGIN SYSTEM
+══════════════════════════════════ */
+const CORRECT_PIN = '0000';
+let currentPin = '';
+
+const loginStars = document.getElementById('loginStars');
+for (let i = 0; i < 100; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2.5 + 0.8;
+  s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${Math.random()*4+2}s;animation-delay:${Math.random()*4}s;`;
+  loginStars.appendChild(s);
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('d' + i);
+    if (i < currentPin.length) {
+      dot.textContent = '♥';
+      dot.classList.add('filled');
+    } else {
+      dot.textContent = '·';
+      dot.classList.remove('filled');
+    }
+  }
+}
+
+function enterPin(digit) {
+  if (currentPin.length >= 4) return;
+  currentPin += digit;
+  updatePinDisplay();
+  document.getElementById('loginError').textContent = '';
+  if (currentPin.length === 4) {
+    setTimeout(() => {
+      if (currentPin === CORRECT_PIN) {
+        unlockSite();
+      } else {
+        showLoginError();
+        currentPin = '';
+        updatePinDisplay();
+      }
+    }, 300);
+  }
+}
+
+function deletePin() {
+  currentPin = currentPin.slice(0, -1);
+  updatePinDisplay();
+  document.getElementById('loginError').textContent = '';
+}
+
+function showLoginError() {
+  const card = document.getElementById('loginCard');
+  const err = document.getElementById('loginError');
+  err.textContent = '❌ Буруу нууц үг, дахин оруул';
+  card.classList.add('shake');
+  setTimeout(() => card.classList.remove('shake'), 400);
+}
+
+function unlockSite() {
+  const overlay = document.getElementById('loginOverlay');
+  overlay.style.transition = 'opacity 0.8s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.getElementById('mainContent').style.display = 'flex';
+    initMain();
+  }, 800);
+}
+
+/* ══════════════════════════════════
+   MAIN CONTENT INIT
+══════════════════════════════════ */
+function initMain() {
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 140; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${Math.random()*4+2}s;animation-delay:${Math.random()*4}s;`;
+    starsEl.appendChild(s);
+  }
+
+  const aurora = document.getElementById('aurora');
+  [
+    {w:700,h:500,t:'10%',l:'20%',bg:'rgba(255,100,150,1)',dr:'12s',tx:'80px',ty:'40px'},
+    {w:500,h:400,t:'50%',l:'60%',bg:'rgba(150,50,200,1)',dr:'15s',tx:'-60px',ty:'80px'},
+    {w:600,h:350,t:'30%',l:'-10%',bg:'rgba(255,150,100,1)',dr:'10s',tx:'40px',ty:'-60px'},
+  ].forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'aurora-band';
+    d.style.cssText = `width:${b.w}px;height:${b.h}px;top:${b.t};left:${b.l};background:${b.bg};--dr:${b.dr};--tx:${b.tx};--ty:${b.ty};`;
+    aurora.appendChild(d);
+  });
+
+  const heartBg = document.getElementById('heartBg');
+  const emojis = ['💕','💗','💓','💞','🌸','✨','💖','🌷'];
+  for (let i = 0; i < 22; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart-float';
+    h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    h.style.cssText = `left:${Math.random()*100}%;--fs:${Math.random()*18+12}px;--dur:${Math.random()*10+8}s;--delay:${Math.random()*10}s;`;
+    heartBg.appendChild(h);
+  }
+
+  setTimeout(() => {
+    audio.play().then(() => {
+      disc.classList.add('playing');
+      playBtn.textContent = '⏸';
+      playing = true;
+    }).catch(() => {});
+  }, 600);
+}
+
+/* ══════════════════════════════════
+   MUSIC PLAYER
+══════════════════════════════════ */
+const audio   = document.getElementById('bgMusic');
+const disc    = document.getElementById('disc');
+const playBtn = document.getElementById('playBtn');
+const fill    = document.getElementById('progressFill');
+const curTimeEl  = document.getElementById('curTime');
+const durTimeEl  = document.getElementById('durTime');
+const progressBar = document.getElementById('progressBar');
+
+let playing = false;
+
+function fmt(s) {
+  if (!isFinite(s)) return '-:--';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+}
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+  curTimeEl.textContent = fmt(audio.currentTime);
+});
+
+audio.addEventListener('loadedmetadata', () => {
+  durTimeEl.textContent = fmt(audio.duration);
+});
+
+progressBar.addEventListener('click', (e) => {
+  if (!audio.duration) return;
+  const rect = progressBar.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+});
+
+function toggleMusic() {
+  if (playing) {
+    audio.pause();
+    disc.classList.remove('playing');
+    playBtn.textContent = '▶';
+  } else {
+    audio.play().catch(() => {});
+    disc.classList.add('playing');
+    playBtn.textContent = '⏸';
+  }
+  playing = !playing;
+}
+
+/* ══════════════════════════════════
+   MUSIC UPLOAD — NEW FUNCTION
+══════════════════════════════════ */
+function uploadMusic(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Stop current playback
+  audio.pause();
+  disc.classList.remove('playing');
+  playBtn.textContent = '▶';
+  playing = false;
+
+  // Revoke old blob URL if any
+  if (audio._blobUrl) {
+    URL.revokeObjectURL(audio._blobUrl);
+    audio._blobUrl = null;
+  }
+
+  // Create new blob URL and load it
+  const blobUrl = URL.createObjectURL(file);
+  audio._blobUrl = blobUrl;
+  audio.src = blobUrl;
+  audio.load();
+
+  // Update UI labels
+  const name = file.name.replace(/\.[^.]+$/, ''); // strip extension
+  document.getElementById('musicTitle').textContent = name;
+  document.getElementById('musicArtist').textContent = '♪ Таны дуу';
+  document.getElementById('uploadHint').textContent = '✓ Амжилттай нэмэгдлээ 🎶';
+
+  // Reset progress
+  fill.style.width = '0%';
+  curTimeEl.textContent = '0:00';
+  durTimeEl.textContent = '-:--';
+
+  // Auto-play after load
+  audio.addEventListener('canplay', function onCanPlay() {
+    audio.removeEventListener('canplay', onCanPlay);
+    audio.play().then(() => {
+      disc.classList.add('playing');
+      playBtn.textContent = '⏸';
+      playing = true;
+    }).catch(() => {});
+  });
+
+  // Heart burst effect
+  const btn = input.closest('.upload-music-btn');
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    createBurst(r.left + r.width / 2, r.top + r.height / 2);
+  }
+}
+
+/* ══════════════════════════════════
+   PHOTO UPLOADS
+══════════════════════════════════ */
+function changeMainPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('mainPhoto').src = URL.createObjectURL(file);
+  createBurst(window.innerWidth / 2, 200);
+}
+
+function addPhoto(input, idx) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const slot = document.getElementById('slot' + idx);
+  slot.innerHTML = `<img src="${url}" alt="дурсамж">`;
+  const ni = document.createElement('input');
+  ni.type = 'file'; ni.accept = 'image/*';
+  ni.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;';
+  ni.onchange = (e) => addPhoto(e.target, idx);
+  slot.appendChild(ni);
+  const r = slot.getBoundingClientRect();
+  createBurst(r.left + 30, r.top + 30);
+}
+
+/* ══════════════════════════════════
+   REVEAL SECRET
+══════════════════════════════════ */
+function revealSecret(e) {
+  const secret = document.getElementById('secret');
+  secret.classList.toggle('show');
+  const btn = e.currentTarget;
+  if (secret.classList.contains('show')) {
+    btn.textContent = '🌸 Нуух';
+    createBurst(e.clientX, e.clientY);
+    if (!playing) toggleMusic();
+  } else {
+    btn.textContent = '❤️ Сэтгэлийг нээ';
+  }
+}
+
+/* ══════════════════════════════════
+   QR CODE
+══════════════════════════════════ */
+function showQR() {
+  const modal = document.getElementById('qrModal');
+  document.getElementById('qrcode').innerHTML = '';
+
+  // URL with ?open=1 so QR scanner bypasses PIN
+  const base = window.location.href.split('?')[0];
+  const qrUrl = base + '?open=1';
+
+  new QRCode(document.getElementById('qrcode'), {
+    text: qrUrl,
+    width: 200, height: 200,
+    colorDark: '#1a0a15', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  const passEl = document.querySelector('.qr-pass');
+  if (passEl) passEl.innerHTML = '📱 Скан хийхэд <strong style="color:#ff9db8">шууд нэвтэрнэ</strong>';
+
+  modal.classList.add('show');
+}
+
+document.getElementById('qrModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('qrModal'))
+    document.getElementById('qrModal').classList.remove('show');
+});
+
+/* ══════════════════════════════════
+   HEART BURST
+══════════════════════════════════ */
+function createBurst(x, y) {
+  const hearts = ['💕','💗','💖','💓','✨','🌸'];
+  for (let i = 0; i < 14; i++) {
+    const el = document.createElement('div');
+    el.className = 'burst';
+    el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+    const angle = (Math.PI * 2 * i) / 14;
+    const dist  = 80 + Math.random() * 80;
+    el.style.cssText = `left:${x}px;top:${y}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1100);
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (document.getElementById('mainContent').style.display === 'none') return;
+  if (e.target.closest('.reveal-btn') || e.target.type === 'file' || e.target.closest('.qr-btn') || e.target.closest('#qrModal')) return;
+  const el = document.createElement('div');
+  el.className = 'burst';
+  el.textContent = ['💕','💗','✨'][Math.floor(Math.random() * 3)];
+  el.style.cssText = `left:${e.clientX}px;top:${e.clientY}px;font-size:16px;--tx:${(Math.random()-.5)*60}px;--ty:${-40-Math.random()*40}px;`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+});
+</script>
+</body>
+</html>
